@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ReactNode } from "react";
 import {
   FaUsers,
   FaBoxOpen,
@@ -14,6 +15,27 @@ export const metadata = {
     "GirviPro helps jewellery shops manage loans, inventory, and customer girvi records easily. Trusted by jewellery shops across India.",
 };
 
+// =================== Types ===================
+type FeatureProps = {
+  icon: ReactNode;
+  title: string;
+  desc: string;
+};
+
+type PriceCardProps = {
+  title: string;
+  price: string;
+  note: string;
+  popular?: boolean;
+  contact?: boolean;
+};
+
+type FAQProps = {
+  q: string;
+  a: string;
+};
+
+// =================== Landing Page ===================
 export default function LandingPage() {
   return (
     <main className="font-sans text-gray-900 bg-gradient-to-b from-white to-yellow-50">
@@ -61,7 +83,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works – Premium Stepper */}
+      {/* How It Works – Stepper */}
       <section className="container mx-auto px-6 py-28">
         <h2 className="text-4xl font-bold text-center mb-6">How GirviPro Works</h2>
         <p className="text-center text-gray-600 mb-20 max-w-2xl mx-auto">
@@ -69,11 +91,9 @@ export default function LandingPage() {
         </p>
 
         <div className="relative">
-          {/* Step Line */}
           <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-yellow-200 -z-10" />
 
           <div className="grid md:grid-cols-3 gap-12">
-            {/* Step 1 */}
             <div className="group bg-white p-10 rounded-3xl shadow-xl hover:shadow-2xl transition text-center">
               <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-yellow-500 text-white text-2xl font-bold group-hover:scale-110 transition">
                 1
@@ -84,7 +104,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Step 2 */}
             <div className="group bg-white p-10 rounded-3xl shadow-xl hover:shadow-2xl transition text-center">
               <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-yellow-500 text-white text-2xl font-bold group-hover:scale-110 transition">
                 2
@@ -95,7 +114,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Step 3 */}
             <div className="group bg-white p-10 rounded-3xl shadow-xl hover:shadow-2xl transition text-center">
               <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-yellow-500 text-white text-2xl font-bold group-hover:scale-110 transition">
                 3
@@ -164,7 +182,8 @@ export default function LandingPage() {
   );
 }
 
-function Feature({ icon, title, desc }) {
+// =================== Components ===================
+function Feature({ icon, title, desc }: FeatureProps) {
   return (
     <div className="p-8 border rounded-2xl shadow-lg hover:shadow-2xl transition text-center">
       <div className="text-yellow-500 text-4xl mx-auto mb-4">{icon}</div>
@@ -173,14 +192,6 @@ function Feature({ icon, title, desc }) {
     </div>
   );
 }
-
-type PriceCardProps = {
-  title: string;
-  price: string;
-  note: string;
-  popular?: boolean;
-  contact?: boolean;
-};
 
 function PriceCard({ title, price, note, popular = false, contact = false }: PriceCardProps) {
   return (
@@ -203,7 +214,7 @@ function PriceCard({ title, price, note, popular = false, contact = false }: Pri
   );
 }
 
-function FAQ({ q, a }) {
+function FAQ({ q, a }: FAQProps) {
   return (
     <div className="p-6 bg-white border rounded-xl shadow">
       <h4 className="font-semibold mb-2">{q}</h4>

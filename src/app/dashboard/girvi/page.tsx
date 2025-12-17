@@ -1,25 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, serverTimestamp, DocumentData } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/context/UserContext";
 import AddGirviModal from "@/src/components/girvi/AddGirviModal";
 import { getISTDateTime } from "@/src/utils/dateTimeIST";
 
+// ================= Types =================
+type GirviItem = {
+  title: string;
+  photoBase64: string;
+  caret?: string;
+  weight?: string;
+};
+
 type Girvi = {
   id: string;
   customerName: string;
   customerPhone: string;
-  items: { title: string, photoBase64:string }[];
+  items: GirviItem[];
   principal: number;
   interestRate: number;
   status: string;
   createdAt: any;
   payments?: number[];
-  CreatedAtIST: any
+  CreatedAtIST: string;
 };
 
+// ================= Component =================
 export default function GirviPage() {
   const { user } = useUser();
   const shopId = user?.shopId || "";
@@ -29,20 +38,38 @@ export default function GirviPage() {
   const [openAddModal, setOpenAddModal] = useState(false);
   const [selectedGirvi, setSelectedGirvi] = useState<Girvi | null>(null);
 
-  /* ================= FETCH GIRVIS ================= */
+  // ================= FETCH GIRVIS =================
   useEffect(() => {
     if (!shopId) return;
+
     const fetchGirvis = async () => {
       setLoading(true);
       const snap = await getDocs(collection(db, "shops", shopId, "girvis"));
-      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+
+      const list: Girvi[] = snap.docs.map((d) => {
+        const data = d.data() as DocumentData;
+        return {
+          id: d.id,
+          customerName: data.customerName,
+          customerPhone: data.customerPhone,
+          items: data.items || [],
+          principal: data.principal || 0,
+          interestRate: data.interestRate || 0,
+          status: data.status || "active",
+          createdAt: data.createdAt,
+          payments: data.payments || [],
+          CreatedAtIST: getISTDateTime(data.createdAt),
+        };
+      });
+
       setGirvis(list);
       setLoading(false);
     };
+
     fetchGirvis();
   }, [shopId]);
 
-  /* ================= STATUS COLOR ================= */
+  // ================= STATUS COLOR =================
   const statusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -56,7 +83,7 @@ export default function GirviPage() {
     }
   };
 
-  /* ================= CALCULATE DUE ================= */
+  // ================= CALCULATE DUE =================
   const calculateDue = (g: Girvi) => {
     if (!g.createdAt) return 0;
     const created = g.createdAt.toDate ? g.createdAt.toDate() : new Date(g.createdAt);
@@ -69,7 +96,7 @@ export default function GirviPage() {
     return g.principal + interest - totalPayments;
   };
 
-  /* ================= UPDATE PAYMENTS ================= */
+  // ================= UPDATE PAYMENTS =================
   const addPayment = async (amount: number) => {
     if (!selectedGirvi) return;
     const updatedPayments = [...(selectedGirvi.payments || []), amount];
@@ -84,11 +111,12 @@ export default function GirviPage() {
     );
   };
 
-  /* ================= CLOSE GIRVI ================= */
+  // ================= CLOSE GIRVI =================
   const closeGirvi = async () => {
     if (!selectedGirvi) return;
     const docRef = doc(db, "shops", shopId, "girvis", selectedGirvi.id);
     await updateDoc(docRef, { status: "closed", updatedAt: serverTimestamp() });
+
     setSelectedGirvi({ ...selectedGirvi, status: "closed" });
     setGirvis((prev) =>
       prev.map((g) =>
@@ -133,9 +161,11 @@ export default function GirviPage() {
 
               <div className="mb-2">
                 <div className="font-medium text-black">Jewellery Items:</div>
-                {g.items.map((i: any, idx: number) => (
+                {g.items.map((i, idx) => (
                   <div key={idx} className="text-sm text-black">
                     - {i.title}
+                    {i.caret && <span>, Caret: {i.caret}</span>}
+                    {i.weight && <span>, Weight: {i.weight}</span>}
                   </div>
                 ))}
               </div>
@@ -183,34 +213,32 @@ export default function GirviPage() {
             </div>
 
             {/* Jewellery Items */}
-       <div>
-  <div className="font-medium text-black mb-2">Jewellery Items:</div>
+            <div>
+              <div className="font-medium text-black mb-2">Jewellery Items:</div>
 
- <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-  {selectedGirvi.items.map((i, idx) => (
-    <div
-      key={idx}
-      className="flex items-center gap-3 border rounded-lg p-3 bg-white"
-    >
-      {i.photoBase64 && (
-        <img
-          src={i.photoBase64}
-          alt={i.title}
-          className="w-14 h-14 rounded-lg object-cover border"
-        />
-      )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {selectedGirvi.items.map((i, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 border rounded-lg p-3 bg-white"
+                  >
+                    {i.photoBase64 && (
+                      <img
+                        src={i.photoBase64}
+                        alt={i.title}
+                        className="w-14 h-14 rounded-lg object-cover border"
+                      />
+                    )}
 
-      <div className="text-black text-sm">
-        <div className="font-semibold">{i.title}</div>
-        {i.caret && <div>Caret: {i.caret}</div>}
-        {i.weight && <div>Weight: {i.weight}</div>}
-      </div>
-    </div>
-  ))}
-</div>
-
-</div>
-
+                    <div className="text-black text-sm">
+                      <div className="font-semibold">{i.title}</div>
+                      {i.caret && <div>Caret: {i.caret}</div>}
+                      {i.weight && <div>Weight: {i.weight}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Principal & Interest */}
             <div className="grid grid-cols-2 gap-4">
